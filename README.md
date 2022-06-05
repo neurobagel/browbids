@@ -10,6 +10,8 @@ At the moment, all that is here is:
 - the `vue-plugin-load-script` plugin to get the `pyodide` js from their CDN
 - a single component `BidsFriend.vue` that loads `pyodide` and installs [`ancpBIDS`](https://github.com/ANCPLabOldenburg/ancp-bids)
 
+
+Try me: https://voluble-kleicha-ccad41.netlify.app/
 ## Project setup
 ```
 npm install

@@ -1,17 +1,20 @@
 <template>
-    <div>
+    <div class="justify-center w-full">
         <h3>My python is ready: {{ status.python }}</h3>
         <div v-if="status.python">
           I now have access to ancpBIDS version {{ ancp.version }}
           <p>All is well with the world.</p>
           <div>
-            <p>You can load data but I don't know what to do with it yet</p>
-            <input @change="parseFiles" type="file" id="filepicker" name="fileList" webkitdirectory multiple />
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="filepicker">Select some files from your computer and have python see their paths.</label>
+            <input class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            @change="parseFiles" type="file" id="filepicker" name="fileList" webkitdirectory multiple />
+            <span class="block text-sm my-6" style="white-space: pre;">{{python.output}}</span>
           </div>
-          <div>
-            <p>This will get a remote BIDS dataset and list the subjects</p>
-            <button @click="doBidsStuff">Click me for some BIDS stuff</button>
-            <div class="">{{bids.output}}</div>
+          <div class="mb-6">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="bidsButton">This will get a remote BIDS dataset and list the subjects</label>
+            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+             @click="doBidsStuff">Click me for some BIDS stuff</button>
+            <span class="block text-sm my-6" style="white-space: pre;">{{bids.output}}</span>
           </div>
         </div>
     </div>
@@ -22,7 +25,7 @@ import { reactive, onBeforeMount } from 'vue'
 import { loadScript } from "vue-plugin-load-script";
 
 let status = reactive({python: false});
-let python = reactive({pyodide: null});
+let python = reactive({pyodide: null, output: "no output yet"});
 let ancp = reactive({version: null});
 let bids = reactive({output: ""});
 
@@ -53,8 +56,21 @@ onBeforeMount( async () => {
 })
 
 
-function parseFiles() {
-  console.log("I'd like to do something, but don't know how.")
+function parseFiles(event) {
+  // eslint-disable-next-line
+  const files = event.target.files;
+  python.pyodide.globals.set("file_things", files);
+  python.output = python.pyodide.runPython(`
+    from pathlib import Path
+    import os
+
+    report = f"I am in python, reading your files {os.linesep}"
+    report += f"{os.linesep}".join([f"{file.webkitRelativePath} is a file: {Path(file.webkitRelativePath).is_file()}"
+                                    for file in file_things])
+    report += f"{os.linesep}These were the files, goodbye"
+    print(report)
+  `);
+  python.output = python.pyodide.globals.get('report');
 }
 
 async function doBidsStuff() {

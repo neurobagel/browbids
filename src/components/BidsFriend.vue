@@ -62,10 +62,8 @@ function parseFiles(event) {
   python.pyodide.globals.set("file_things", files);
   python.output = python.pyodide.runPython(`
     from pathlib import Path
-    import os
 
     cwd = Path.cwd()
-    print("I am here:", cwd)
 
     # Make me some paths
     for file in file_things:
@@ -74,11 +72,13 @@ function parseFiles(event) {
       file_path.touch()
       print(f"I just made a file at {file_path} and now it exists? ({file_path.is_file()}")
 
-    report = f"I am in python, reading your files {os.linesep}"
-    report += f"{os.linesep}".join([f"{file.webkitRelativePath} is a file: {Path(file.webkitRelativePath).is_file()}"
-                                    for file in file_things])
-    report += f"{os.linesep}These were the files, goodbye"
-    print(report)
+    report = "Hello, I am talking to you from inside python. Let's take a look at this BIDS dataset of yours!"
+
+    # Now I want to parse this!
+    bids_root = file_path.parents[0]
+    ds_layout = ancpbids.BIDSLayout(bids_root)
+    report += f"\\n\\nI have now parsed your BIDS dataset. Here is what I found:\\n{ds_layout.get_entities()}"
+
   `);
   python.output = python.pyodide.globals.get('report');
 }

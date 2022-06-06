@@ -10,12 +10,6 @@
             @change="parseFiles" type="file" id="filepicker" name="fileList" webkitdirectory multiple />
             <span class="block text-sm my-6" style="white-space: pre;">{{python.output}}</span>
           </div>
-          <div class="mb-6">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="bidsButton">This will get a remote BIDS dataset and list the subjects</label>
-            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-             @click="doBidsStuff">Click me for some BIDS stuff</button>
-            <span class="block text-sm my-6" style="white-space: pre;">{{bids.output}}</span>
-          </div>
         </div>
     </div>
 </template>
@@ -27,7 +21,7 @@ import { loadScript } from "vue-plugin-load-script";
 let status = reactive({python: false});
 let python = reactive({pyodide: null, output: "no output yet"});
 let ancp = reactive({version: null});
-let bids = reactive({output: ""});
+// let bids = reactive({output: ""});
 
 
 async function setupPython() {
@@ -89,21 +83,21 @@ function parseFiles(event) {
   python.output = python.pyodide.globals.get('report');
 }
 
-async function doBidsStuff() {
-  bids.output = await python.pyodide.runPythonAsync(`
-    from pyodide.http import pyfetch
-    ds005_zip = await pyfetch("https://raw.githubusercontent.com/ANCPLabOldenburg/ancp-bids-dataset/main/ds005-testdata.zip")
-    if ds005_zip.status == 200:
-      with open("ds005-testdata.zip", "wb") as f:
-        f.write(await ds005_zip.bytes())
-    # unzip dataset archive
-    import zipfile
-    with zipfile.ZipFile('ds005-testdata.zip', 'r') as zip_ref:
-        zip_ref.extractall('./ds005')
-    ds005_layout = ancpbids.BIDSLayout('ds005')
-    #run queries
-    ds005_layout.get_subjects()
-  `)
-}
+// async function doBidsStuff() {
+//   bids.output = await python.pyodide.runPythonAsync(`
+//     from pyodide.http import pyfetch
+//     ds005_zip = await pyfetch("https://raw.githubusercontent.com/ANCPLabOldenburg/ancp-bids-dataset/main/ds005-testdata.zip")
+//     if ds005_zip.status == 200:
+//       with open("ds005-testdata.zip", "wb") as f:
+//         f.write(await ds005_zip.bytes())
+//     # unzip dataset archive
+//     import zipfile
+//     with zipfile.ZipFile('ds005-testdata.zip', 'r') as zip_ref:
+//         zip_ref.extractall('./ds005')
+//     ds005_layout = ancpbids.BIDSLayout('ds005')
+//     #run queries
+//     ds005_layout.get_subjects()
+//   `)
+// }
 
 </script>

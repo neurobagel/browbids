@@ -64,6 +64,16 @@ function parseFiles(event) {
     from pathlib import Path
     import os
 
+    cwd = Path.cwd()
+    print("I am here:", cwd)
+
+    # Make me some paths
+    for file in file_things:
+      file_path = Path(cwd / file.webkitRelativePath)
+      file_path.parent.mkdir(parents=True, exist_ok=True)
+      file_path.touch()
+      print(f"I just made a file at {file_path} and now it exists? ({file_path.is_file()}")
+
     report = f"I am in python, reading your files {os.linesep}"
     report += f"{os.linesep}".join([f"{file.webkitRelativePath} is a file: {Path(file.webkitRelativePath).is_file()}"
                                     for file in file_things])

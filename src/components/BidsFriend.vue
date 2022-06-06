@@ -5,7 +5,7 @@
           I now have access to ancpBIDS version {{ ancp.version }}
           <p>All is well with the world.</p>
           <div>
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="filepicker">Select some files from your computer and have python see their paths.</label>
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="filepicker">Select a BIDS directory from your computer and have python parse the contents in your browser.</label>
             <input class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             @change="parseFiles" type="file" id="filepicker" name="fileList" webkitdirectory multiple />
             <span class="block text-sm my-6" style="white-space: pre;">{{python.output}}</span>
@@ -77,7 +77,13 @@ function parseFiles(event) {
     # Now I want to parse this!
     bids_root = file_path.parents[0]
     ds_layout = ancpbids.BIDSLayout(bids_root)
-    report += f"\\n\\nI have now parsed your BIDS dataset. Here is what I found:\\n{ds_layout.get_entities()}"
+    report += f"""
+      I have now parsed your BIDS dataset. Here is what I found:
+      Your subjects: {ds_layout.get_subjects()}
+      Your sessions: {ds_layout.get_sessions()}
+      Your tasks: {ds_layout.get_tasks()}
+      Your modalities: {ds_layout.get_suffix()}
+      """
 
   `);
   python.output = python.pyodide.globals.get('report');

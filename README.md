@@ -24,7 +24,7 @@ Because we don't read any file contents and also don't copy anything into the br
 this does not take very long.
 The longest process at the moment is setting up the pyodide python environment and installing ancp_bids.
 
-You can try this app here: https://vuebids.netlify.app/
+You can try this app here: https://browbids.netlify.app/
 ## Project setup
 ```
 npm install

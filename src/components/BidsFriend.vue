@@ -1,26 +1,38 @@
 <template>
     <div class="justify-center w-full">
-        <h3>My python is ready: {{ status.python }}</h3>
+      <h3>{{ status.python ? 'Python Loaded' : 'loading...' }}</h3>
         <div v-if="status.python">
           I now have access to ancpBIDS version {{ ancp.version }}
           <p>All is well with the world.</p>
           <div>
+            <h3>Initial Method:</h3>
             <label class="block text-gray-700 text-sm font-bold mb-2" for="filepicker">Select a BIDS directory from your computer and have python parse the contents in your browser.</label>
-            <input class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            <!-- <input class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             @change="parseFiles" type="file" id="filepicker" name="fileList" webkitdirectory multiple />
-            <span class="block text-sm my-6" style="white-space: pre;">{{python.output}}</span>
+            <span class="block text-sm my-6" style="white-space: pre;">{{python.output}}</span> -->
+            <button @click="parseFiles">CLICK ME</button>
           </div>
+          <!-- <div>
+            <h1 style="font-weight: bold">New Method:</h1>
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="filepicker">Select a BIDS directory from your computer and have python parse the contents in your browser.</label>
+            <button class="border rounded p-2" @click="openFile">open a file</button>
+            <span class="block text-sm my-6" style="white-space: pre;">{{python.output}}</span>
+          </div> -->
         </div>
     </div>
 </template>
 
 <script setup>
 import { reactive, onBeforeMount } from 'vue'
-import { loadScript } from "vue-plugin-load-script";
+// import { loadScript } from "vue-plugin-load-script";
 
 let status = reactive({python: false});
 let python = reactive({pyodide: null, output: "no output yet"});
 let ancp = reactive({version: null});
+// let fileContents = reactive({ 
+//   file: null,
+//   fileContent: null
+//  })
 // let bids = reactive({output: ""});
 
 
@@ -36,26 +48,40 @@ async function setupPython() {
   `);
   status.python = true;
   ancp.version = python.pyodide.globals.get('ancp_v');
+  console.log(python.pyodide.loadedPackages)
 }
 
-onBeforeMount( async () => {
-    loadScript("https://cdn.jsdelivr.net/pyodide/v0.20.0/full/pyodide.js")
-  .then(() => {
-    setupPython();
-  })
-  .catch(() => {
-    // Failed to fetch script
-    console.log("could not get pyodide")
-  });
-})
+onBeforeMount(
+  async () => {
+    console.log(python)
+    if (!python.pyodide) {
+      setupPython();
+    } else {
+      status.python = true;
+    }
+  }
+)
 
+async function parseFiles() {
+  const dirHandle = await window.showDirectoryPicker();
 
-function parseFiles(event) {
-  // eslint-disable-next-line
-  const files = event.target.files;
-  python.pyodide.globals.set("file_things", files);
+  if ((await dirHandle.queryPermission({ mode: "readwrite" })) !== "granted") {
+    if (
+      (await dirHandle.requestPermission({ mode: "readwrite" })) !== "granted"
+    ) {
+      throw Error("Unable to read and write directory");
+    }
+  }
+
+  console.log(python.pyodide.mountNativeFS)
+
+  await python.pyodide.mountNativeFS("/abc", dirHandle);
+
+  // python.pyodide.globals.set("file_things", files);
   python.output = python.pyodide.runPython(`
     from pathlib import Path
+    from ancpbids import load_dataset
+    from ancpbids.query import query
 
     cwd = Path.cwd()
 
@@ -69,19 +95,38 @@ function parseFiles(event) {
     report = "Hello, I am talking to you from inside python. Let's take a look at this BIDS dataset of yours!"
 
     # Now I want to parse this!
-    bids_root = file_path.parents[0]
-    ds_layout = ancpbids.BIDSLayout(bids_root)
+    # bids_root = file_path.parents[0]
+  
+    ds_layout = load_dataset("/abc")
+
+    q = query( ds_layout, 'file', extension='tsv' )[0]
+    text = open(q, 'r').readlines()
+
     report += f"""
-      I have now parsed your BIDS dataset. Here is what I found:
-      Your subjects: {ds_layout.get_subjects()}
-      Your sessions: {ds_layout.get_sessions()}
-      Your tasks: {ds_layout.get_tasks()}
-      Your modalities: {ds_layout.get_suffix()}
+      {q}
+      {text}
       """
 
   `);
   python.output = python.pyodide.globals.get('report');
 }
+
+// function extractAllContentForFiles(files) {
+//   [...files].forEach((file) => {
+//     console.log(extractFile(file))
+//   })
+// }
+
+// function extractFile(file) {
+//   const fileReader = new FileReader();
+//   fileReader.onload((e) => {
+//     return e.target.result
+//   })
+//   fileReader.onerror((e) => {
+//     console.error(e)
+//   })
+//   fileReader.readAsText(file, "UTF-8");
+// }
 
 // async function doBidsStuff() {
 //   bids.output = await python.pyodide.runPythonAsync(`
